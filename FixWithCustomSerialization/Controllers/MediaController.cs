@@ -1,4 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
+using MongoDB.Driver.Linq;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FixWithCustomSerialization.Controllers;
 
@@ -7,19 +11,21 @@ namespace FixWithCustomSerialization.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly ILogger<MediaController> _logger;
-
-    public MediaController(ILogger<MediaController> logger/*, IDbService _db*/)
+    private readonly IDbService _db;
+    public MediaController(ILogger<MediaController> logger, IDbService db)
     {
         _logger = logger;
+        _db = db;
     }
 
-    [HttpPost]
+    [HttpPost("update")]
     public MediaFile UpdateMedia([FromBody] MediaFile media)
     {
-        throw new NotImplementedException();
 
+        var getMedia = _db.SaveMedia(media);
+        return getMedia;
         /* todo: Implement the method
-         * 
+         *          
          * 1. media will be contained in the ImageDataB64 prop. It should have been already saved to the webroots folder by the "read" method of MediaFileJsonConverter
          * 2. Save the media object in Mongo db
          * 3. return the MediaFile object
@@ -29,10 +35,10 @@ public class MediaController : ControllerBase
     }
 
     [HttpGet("{Name}")]
-    public MediaFile GetMedia(string Name)
+    public MediaFile GetMedia(string name)
     {
-        throw new NotImplementedException();
-
+        var getMedia = _db.GetMedia(name);
+        return getMedia;
         /*
          * return _mongoDb.getcollection<MediaFile>.Find(m=>m.Name==Name).SingleAsync();
          * 
@@ -44,23 +50,25 @@ public class MediaController : ControllerBase
 
 /// <summary>
 /// todo: implement MediaFileJsonConverter  
-/// [JsonConverter(typeof(MediaFileJsonConverter))]
+[JsonConverter(typeof(MediaFileJsonConverter))]
 /// </summary>
 public class MediaFile
 {
     /// <summary>
     /// todo: We want media name to be Unique, Please enforce using MongoDb Unique Index
     /// </summary>
+    public ObjectId _id { get; set; }
     public string Name { get; set; } = "";
 
     /// <summary>
     /// todo: donot Save in database
     /// </summary>
+
     public string ImageDataB64 { get; set; } = "";
 
     /// <summary>
     /// todo: donot Save in database, Generate dynamically using 
-    /// </summary>
+    /// </summary>   
     public string PublicUrl { get; set; } = "";
 
 
